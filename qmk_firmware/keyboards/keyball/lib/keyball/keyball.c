@@ -22,6 +22,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "keyball.h"
 #include "drivers/pmw3360/pmw3360.h"
+#define bool _Bool
+#define FALSE ((bool)+0)
+#define TRUE ((bool)+1)
 
 const uint8_t CPI_DEFAULT    = KEYBALL_CPI_DEFAULT / 100;
 const uint8_t CPI_MAX        = pmw3360_MAXCPI + 1;
@@ -424,6 +427,77 @@ void keyball_oled_render_layerinfo(void) {
 #endif
 }
 
+bool life_state[84] = {};
+bool next_state[84] = {};
+int state_count = 0;
+
+bool check_next_lived(int i) {
+    i = i % 84;
+    int h = i % 21;
+    int w = i / 21;
+    int h1 = (h + 1) % 21;
+    int h_1 = (h - 1) % 21;
+    int w1 = (w + 1) % 4;
+    int w_1 = (w - 1) % 4;
+    
+    int count = 0;
+    if (life_state[w_1*21+h_1]) count++;
+    if (life_state[w_1*21+h]) count++;
+    if (life_state[w_1*21+h1]) count++;
+    if (life_state[w*21+h_1]) count++;
+    if (life_state[w*21+h1]) count++;
+    if (life_state[w1*21+h_1]) count++;
+    if (life_state[w1*21+h]) count++;
+    if (life_state[w1*21+h1]) count++;
+
+    if (life_state[i]){
+        switch (count) {
+        case 2:
+        case 3:
+            return TRUE;
+        default:
+            return FALSE;
+        }
+    } else {
+        switch (count) {
+        case 3:
+            return TRUE;
+        default:
+            return FALSE;
+        }
+    }
+    return FALSE;
+}
+
+void update_lifegame(void) {
+    if (state_count == 100) goto reset;
+    for(uint8_t i = 0; i < 84; i++) {
+        next_state[i] = check_next_lived(i);
+    }
+    for(uint8_t i = 0; i < 84; i++) {
+        if (next_state[i] != life_state[i]) goto next;
+    }
+    // reset 
+    reset:
+    for (uint8_t i = 0; i < 84; i++) {
+        next_state[i] = rand() % 2;
+    }
+    state_count = 0;
+    next:
+    for (uint8_t i = 0; i < 84; i++) {
+        life_state[i] = next_state[i];
+    }   
+    state_count++; 
+}
+// game
+void keyball_oled_render_game(void) {
+#ifdef OLED_ENABLE
+    for(uint8_t i = 0; i < 84; i++) {
+        oled_write_char(life_state[i]?'*':' ', false);
+    }
+#endif
+}
+
 //////////////////////////////////////////////////////////////////////////////
 // Public API functions
 
@@ -500,6 +574,7 @@ void housekeeping_task_kb(void) {
 
 bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
     // store last keycode, row, and col for OLED
+    if (record->event.pressed) update_lifegame();
     keyball.last_kc  = keycode;
     keyball.last_pos = record->event.key;
 

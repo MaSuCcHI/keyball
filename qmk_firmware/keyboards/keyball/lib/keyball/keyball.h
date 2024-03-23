@@ -159,6 +159,8 @@ void keyball_oled_render_keyinfo(void);
 /// inactive layers.
 void keyball_oled_render_layerinfo(void);
 
+void keyball_oled_render_game(void);
+
 /// keyball_get_scroll_mode gets current scroll mode.
 bool keyball_get_scroll_mode(void);
 

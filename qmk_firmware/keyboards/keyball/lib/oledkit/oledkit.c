@@ -19,7 +19,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "quantum.h"
 
 #if defined(OLED_ENABLE) && !defined(OLEDKIT_DISABLE)
+#define SPLIT_TRANSPORT_MIRROR
 
+bool should_process_keypress(void) { return true; }
 // clang-format off
 static const char PROGMEM logo[] = {
     0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87, 0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f, 0x90, 0x91, 0x92, 0x93, 0x94,
